@@ -4,28 +4,41 @@ This repository contains scripts to automatically set up a complete development 
 
 ## ✨ What Gets Installed
 
-### 🍺 Package Manager
+### 🍺 Package Manager (Always Installed)
 - **Homebrew** - The missing package manager for macOS
 
-### 🛠 Development Tools
-- **Warp Terminal** - Modern, fast terminal with AI features
-- **Docker Desktop** - Containerization platform
-- **Visual Studio Code** - Code editor
+### 🛠 Essential Development Tools (Always Installed)
 - **Git** - Version control system
-- **Essential CLI tools** - curl, wget, jq, tree, htop
+- **GitHub CLI (gh)** - Official GitHub command line tool
+- **Essential CLI tools** - curl, wget, jq, tree, htop, retry
 
-### 📦 Language Version Manager  
+### 🖥 GUI Applications (Optional - Will Prompt)
+- **Warp Terminal** - Modern, fast terminal with AI features *(default: yes)*
+- **Docker Desktop** - Containerization platform *(default: no)*
+- **Visual Studio Code** - Code editor *(default: no)*
+- **Figma** - Design and prototyping tool *(default: no)*
+- **GitHub Desktop** - Git GUI client *(default: no)*
+
+### 🧰 JetBrains IDEs (Optional - Individual Selection)
+- **JetBrains Toolbox** - Automatically installed if any IDE is selected
+- **DataGrip** - Database IDE *(individual prompt, default: no)*
+- **PHPStorm** - PHP development IDE *(individual prompt, default: no)*
+- **GoLand** - Go development IDE *(individual prompt, default: no)*
+- **WebStorm** - JavaScript/TypeScript development IDE *(individual prompt, default: no)*
+
+### 📰 Language Version Manager  
 - **asdf** - Manage multiple runtime versions with a single CLI tool
 
-### 🔧 Programming Languages
-- **Node.js** (latest LTS) - JavaScript runtime
-- **Go** (latest) - Systems programming language  
-- **PHP** (latest) - Web development language
+### 🔧 Programming Languages (Optional - Individual Selection)
+- **Node.js** (latest LTS) - JavaScript runtime *(individual prompt, default: yes)*
+- **Go** (latest) - Systems programming language *(individual prompt, default: yes)*
+- **PHP** (latest) - Web development language *(individual prompt, default: yes)*
 
 ### 🐚 Shell Enhancement
 - **Oh My Zsh** - Framework for managing zsh configuration
 - **Powerlevel10k** - Beautiful and functional theme
-- **Useful plugins** - autosuggestions, syntax highlighting, git, docker, etc.
+- **Dynamic plugins** - Automatically configures plugins based on installed tools (git, docker, node, python, etc.)
+- **Syntax highlighting & autosuggestions** - Enhanced terminal experience
 - **Helpful aliases** - git shortcuts, docker commands, navigation helpers
 
 ## 🚀 Quick Start
@@ -49,10 +62,77 @@ bash <(curl -s https://raw.githubusercontent.com/yourusername/dotfiles/main/inst
    ./install.sh
    ```
 
+### Installation Options
+
+The installation script supports command-line options to control what gets installed:
+
+```bash
+# Install everything without prompts
+./install.sh --gui-apps --docker --vscode --figma --github-desktop --node --go --php --datagrip --phpstorm --goland --webstorm
+
+# Install only essential tools (skip GUI applications and languages)
+./install.sh --no-gui-apps --no-node --no-go --no-php
+
+# Install specific applications and languages
+./install.sh --docker --vscode --node --php --phpstorm --datagrip
+
+# Run in quiet mode (use defaults)
+./install.sh --quiet
+
+# Show all available options
+./install.sh --help
+```
+
+**Available options:**
+- `--gui-apps` / `--no-gui-apps` - Control Warp terminal installation
+- `--docker` / `--no-docker` - Control Docker Desktop installation
+- `--vscode` / `--no-vscode` - Control VS Code installation
+- `--figma` / `--no-figma` - Control Figma installation
+- `--github-desktop` / `--no-github-desktop` - Control GitHub Desktop installation
+- `--node` / `--no-node` - Control Node.js installation
+- `--go` / `--no-go` - Control Go installation
+- `--php` / `--no-php` - Control PHP installation
+- `--datagrip` / `--no-datagrip` - Control DataGrip installation
+- `--phpstorm` / `--no-phpstorm` - Control PHPStorm installation
+- `--goland` / `--no-goland` - Control GoLand installation
+- `--webstorm` / `--no-webstorm` - Control WebStorm installation
+- `--quiet` / `-q` - Skip prompts, use defaults
+- `--help` / `-h` - Show help message
+
 3. **Restart your terminal** or run:
    ```bash
    source ~/.zshrc
    ```
+
+## 🔐 Authentication & Setup
+
+After installation, the script will help you set up authentication for installed services:
+
+### GitHub CLI Authentication
+If GitHub CLI is installed, you'll be prompted to authenticate:
+```bash
+# The script will ask if you want to authenticate now
+# Or you can run this command later:
+gh auth login
+```
+
+### Docker Desktop Setup
+If Docker Desktop is installed, the script will:
+- Check if Docker is running
+- Offer to open Docker Desktop if it's not running
+- Remind you to accept the license agreement
+
+### Manual Authentication Commands
+```bash
+# GitHub CLI authentication
+gh auth login
+
+# Check GitHub authentication status
+gh auth status
+
+# Docker status check
+docker info
+```
 
 ## 📋 Requirements
 
@@ -83,7 +163,9 @@ You can also run individual setup scripts:
 
 ```
 dotfiles/
+├── AGENTS.md               # AI agent instructions
 ├── install.sh              # Main installation script
+├── uninstall.sh            # Uninstallation script
 ├── scripts/
 │   ├── homebrew.sh         # Homebrew and packages setup
 │   ├── asdf.sh            # asdf and programming languages
@@ -109,6 +191,47 @@ The installation creates a comprehensive `.zshrc` file. For personal customizati
    alias myalias="echo 'Hello World'"
    export MY_CUSTOM_VAR="value"
    ```
+
+### Node.js Package Managers
+
+When Node.js is installed, you'll be prompted to choose additional package managers:
+
+```bash
+# Available options during installation:
+# 1) npm (default - always installed)
+# 2) yarn - Fast, reliable dependency management
+# 3) pnpm - Fast, disk space efficient package manager  
+# 4) bun - All-in-one JavaScript runtime & toolkit
+
+# You can also install them manually:
+npm install -g yarn
+npm install -g pnpm
+curl -fsSL https://bun.sh/install | bash
+
+# Turborepo for monorepo management
+npm install -g turbo
+```
+
+### PHP Development Tools
+
+When PHP is installed, you'll be prompted to choose development tools and servers:
+
+```bash
+# Available options during installation:
+# 1) Laravel Valet - Local development environment for Mac
+# 2) Laravel Installer - Create Laravel projects
+# 3) Symfony CLI - Symfony development tools
+# 4) PHPUnit - PHP testing framework
+# 5) PHP_CodeSniffer - Code style checker
+# 6) Psalm - Static analysis tool
+
+# Composer (PHP dependency manager) is always installed
+# You can also install tools manually:
+composer global require laravel/valet
+composer global require laravel/installer
+composer global require phpunit/phpunit
+curl -sS https://get.symfony.com/cli/installer | bash
+```
 
 ### Programming Language Versions
 
@@ -195,6 +318,55 @@ cd ~/dotfiles
 git pull origin main
 ./install.sh
 ```
+
+## 🗑️ Uninstallation
+
+If you need to remove tools or configurations installed by dotfiles, use the uninstall script:
+
+### Quick Uninstall Options
+
+```bash
+# Remove everything (complete uninstallation)
+./uninstall.sh --all
+
+# Remove only GUI applications
+./uninstall.sh --gui-apps --jetbrains
+
+# Remove only programming languages and asdf
+./uninstall.sh --asdf
+
+# Remove only shell configurations (keeps tools installed)
+./uninstall.sh --config-files --oh-my-zsh
+
+# See what would be removed without actually removing (dry run)
+./uninstall.sh --dry-run --all
+
+# Interactive mode (prompts for each category)
+./uninstall.sh
+```
+
+### Uninstall Options
+
+- `--homebrew` - Remove Homebrew and all its packages ⚠️ **WARNING: Very destructive**
+- `--asdf` - Remove asdf and all installed programming languages
+- `--oh-my-zsh` - Remove Oh My Zsh and related shell configurations
+- `--config-files` - Remove dotfiles-generated configuration files (.zshrc, etc.)
+- `--global-packages` - Remove global packages (npm, composer, yarn, etc.)
+- `--gui-apps` - Remove GUI applications (Warp, VS Code, Docker, etc.)
+- `--jetbrains` - Remove JetBrains IDEs and Toolbox
+- `--all` - Remove everything managed by dotfiles
+- `--dry-run` - Show what would be removed without actually removing
+- `--quiet` - Skip prompts and use defaults
+- `--help` - Show detailed help message
+
+### What Gets Preserved
+
+- **Configuration backups** are created before removal
+- **Personal files** outside the dotfiles scope are never touched
+- **Project-specific configurations** (like `.tool-versions` files in your projects)
+- **Application data** that isn't part of the installation
+
+**Important:** The uninstall script will create backups of your current configurations before removing them. Check `~/.zshrc.pre-dotfiles-uninstall` for your previous shell configuration.
 
 ## 🎯 Available Aliases
 

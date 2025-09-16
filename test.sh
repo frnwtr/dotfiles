@@ -141,6 +141,26 @@ else
     test_warning "Visual Studio Code is not installed (optional)"
 fi
 
+# Test JetBrains IDEs
+test_info "Testing JetBrains IDEs..."
+JETBRAINS_APPS=(
+    "JetBrains Toolbox:JetBrains Toolbox.app"
+    "DataGrip:DataGrip.app"
+    "PhpStorm:PhpStorm.app"
+    "GoLand:GoLand.app"
+)
+
+for app_info in "${JETBRAINS_APPS[@]}"; do
+    app_name="${app_info%%:*}"
+    app_path="${app_info##*:}"
+    
+    if [ -d "/Applications/$app_path" ]; then
+        test_passed "$app_name is installed"
+    else
+        test_warning "$app_name is not installed"
+    fi
+done
+
 # Test Shell Configuration
 test_info "Testing shell configuration..."
 if [ -f "$HOME/.zshrc" ]; then
