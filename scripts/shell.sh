@@ -60,9 +60,7 @@ if command_exists node; then
         PLUGINS="$PLUGINS yarn"
     fi
     
-    if command_exists pnpm; then
-        PLUGINS="$PLUGINS pnpm"
-    fi
+    # Note: pnpm plugin doesn't exist in oh-my-zsh, using regular shell completion
     
     if command_exists bun; then
         PLUGINS="$PLUGINS bun"
@@ -90,18 +88,18 @@ if command_exists python || command_exists python3; then
 fi
 
 if command_exists php; then
-    PLUGINS="$PLUGINS php"
+    # Note: php plugin doesn't exist in oh-my-zsh, using composer plugin only
     
     if command_exists composer; then
         PLUGINS="$PLUGINS composer"
     fi
     
     if command_exists laravel; then
-        PLUGINS="$PLUGINS laravel laravel5"
+        PLUGINS="$PLUGINS laravel"
     fi
     
     if command_exists symfony; then
-        PLUGINS="$PLUGINS symfony symfony2"
+        PLUGINS="$PLUGINS symfony"
     fi
 fi
 
