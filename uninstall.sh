@@ -262,7 +262,7 @@ fi
 if [[ "$REMOVE_GUI_APPS" == "true" ]]; then
     log_info "Removing GUI applications..."
     
-    GUI_APPS=("warp" "docker" "visual-studio-code" "figma" "github")
+    GUI_APPS=("warp" "docker" "visual-studio-code" "figma" "github" "tailscale")
     
     for app in "${GUI_APPS[@]}"; do
         if brew list --cask "$app" >/dev/null 2>&1; then

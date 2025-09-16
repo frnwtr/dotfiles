@@ -24,7 +24,7 @@ The installation script supports command-line options to control optional instal
 
 ```bash
 # Install everything without prompts
-./install.sh --gui-apps --docker --vscode --figma --github-desktop --node --go --php --datagrip --phpstorm --goland --webstorm
+./install.sh --gui-apps --docker --vscode --figma --github-desktop --tailscale --node --go --php --datagrip --phpstorm --goland --webstorm
 
 # Skip all GUI applications and languages
 ./install.sh --no-gui-apps --no-node --no-go --no-php
@@ -45,6 +45,7 @@ The installation script supports command-line options to control optional instal
 - `--vscode` / `--no-vscode` - Control VS Code installation
 - `--figma` / `--no-figma` - Control Figma installation
 - `--github-desktop` / `--no-github-desktop` - Control GitHub Desktop installation
+- `--tailscale` / `--no-tailscale` - Control Tailscale installation
 - `--node` / `--no-node` - Control Node.js installation
 - `--go` / `--no-go` - Control Go installation
 - `--php` / `--no-php` - Control PHP installation
@@ -92,7 +93,7 @@ The uninstall script provides a safe way to remove tools and configurations inst
 ### Uninstall Categories
 1. **Configuration files** (`.zshrc`, etc.) - Restores from backups if available
 2. **Global packages** - npm, yarn, pnpm, composer packages
-3. **GUI applications** - Warp, VS Code, Docker, Figma, GitHub Desktop
+3. **GUI applications** - Warp, VS Code, Docker, Figma, GitHub Desktop, Tailscale
 4. **JetBrains IDEs** - All IDEs plus Toolbox, including config directories
 5. **Oh My Zsh** - Framework, themes, plugins, Powerlevel10k config
 6. **asdf & languages** - Version manager and all installed languages
@@ -148,6 +149,7 @@ The script uses environment variables set by `install.sh` to control optional in
 - `INSTALL_VSCODE` - Controls VS Code (default: ask, defaults to no) 
 - `INSTALL_FIGMA` - Controls Figma (default: ask, defaults to no)
 - `INSTALL_GITHUB_DESKTOP` - Controls GitHub Desktop (default: ask, defaults to no)
+- `INSTALL_TAILSCALE` - Controls Tailscale (default: ask, defaults to no)
 - `INSTALL_DATAGRIP` - Controls DataGrip (default: ask, defaults to no)
 - `INSTALL_PHPSTORM` - Controls PHPStorm (default: ask, defaults to no)
 - `INSTALL_GOLAND` - Controls GoLand (default: ask, defaults to no)

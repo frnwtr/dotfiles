@@ -12,6 +12,7 @@ INSTALL_DOCKER="ask"
 INSTALL_VSCODE="ask"
 INSTALL_FIGMA="ask"
 INSTALL_GITHUB_DESKTOP="ask"
+INSTALL_TAILSCALE="ask"
 # Programming languages
 INSTALL_NODE="ask"
 INSTALL_GO="ask"
@@ -72,6 +73,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         --no-github-desktop)
             INSTALL_GITHUB_DESKTOP="no"
+            shift
+            ;;
+        --tailscale)
+            INSTALL_TAILSCALE="yes"
+            shift
+            ;;
+        --no-tailscale)
+            INSTALL_TAILSCALE="no"
             shift
             ;;
         --node)
@@ -149,6 +158,8 @@ while [[ $# -gt 0 ]]; do
             echo "  --no-figma          Skip Figma installation"
             echo "  --github-desktop    Install GitHub Desktop without asking"
             echo "  --no-github-desktop Skip GitHub Desktop installation"
+            echo "  --tailscale         Install Tailscale without asking"
+            echo "  --no-tailscale      Skip Tailscale installation"
             echo "  --node              Install Node.js without asking"
             echo "  --no-node           Skip Node.js installation"
             echo "  --go                Install Go without asking"
@@ -217,6 +228,7 @@ echo "  • JetBrains IDEs (Toolbox, DataGrip, PHPStorm, GoLand, WebStorm)"
 echo "  • Warp Terminal"
 echo "  • Figma (Design tool)"
 echo "  • GitHub Desktop"
+echo "  • Tailscale (VPN mesh networking)"
 echo ""
 
 # Ask for confirmation
@@ -235,7 +247,7 @@ fi
 
 # Install Homebrew and packages
 log_info "Installing Homebrew and packages..."
-export INSTALL_GUI_APPS INSTALL_JETBRAINS INSTALL_DOCKER INSTALL_VSCODE INSTALL_FIGMA INSTALL_GITHUB_DESKTOP QUIET_MODE
+export INSTALL_GUI_APPS INSTALL_JETBRAINS INSTALL_DOCKER INSTALL_VSCODE INSTALL_FIGMA INSTALL_GITHUB_DESKTOP INSTALL_TAILSCALE QUIET_MODE
 export INSTALL_NODE INSTALL_GO INSTALL_PHP
 export INSTALL_DATAGRIP INSTALL_PHPSTORM INSTALL_GOLAND INSTALL_WEBSTORM
 bash "$DOTFILES_DIR/scripts/homebrew.sh"

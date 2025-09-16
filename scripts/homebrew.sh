@@ -175,6 +175,18 @@ else
     log_info "Skipping GitHub Desktop installation"
 fi
 
+# Install Tailscale (optional)
+if should_install "Tailscale (VPN mesh networking)" "INSTALL_TAILSCALE" "n"; then
+    if ! brew list --cask tailscale >/dev/null 2>&1; then
+        log_info "Installing Tailscale..."
+        brew install --cask --quiet tailscale
+    else
+        log_info "Tailscale is already installed"
+    fi
+else
+    log_info "Skipping Tailscale installation"
+fi
+
 # Install JetBrains Toolbox (if any IDE is selected)
 INSTALL_ANY_JETBRAINS=false
 if [[ "$INSTALL_DATAGRIP" == "yes" ]] || [[ "$INSTALL_PHPSTORM" == "yes" ]] || [[ "$INSTALL_GOLAND" == "yes" ]] || [[ "$INSTALL_WEBSTORM" == "yes" ]]; then

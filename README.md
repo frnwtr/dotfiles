@@ -18,6 +18,7 @@ This repository contains scripts to automatically set up a complete development 
 - **Visual Studio Code** - Code editor *(default: no)*
 - **Figma** - Design and prototyping tool *(default: no)*
 - **GitHub Desktop** - Git GUI client *(default: no)*
+- **Tailscale** - VPN mesh networking tool *(default: no)*
 
 ### 🧰 JetBrains IDEs (Optional - Individual Selection)
 - **JetBrains Toolbox** - Automatically installed if any IDE is selected
@@ -68,7 +69,7 @@ The installation script supports command-line options to control what gets insta
 
 ```bash
 # Install everything without prompts
-./install.sh --gui-apps --docker --vscode --figma --github-desktop --node --go --php --datagrip --phpstorm --goland --webstorm
+./install.sh --gui-apps --docker --vscode --figma --github-desktop --tailscale --node --go --php --datagrip --phpstorm --goland --webstorm
 
 # Install only essential tools (skip GUI applications and languages)
 ./install.sh --no-gui-apps --no-node --no-go --no-php
@@ -89,6 +90,7 @@ The installation script supports command-line options to control what gets insta
 - `--vscode` / `--no-vscode` - Control VS Code installation
 - `--figma` / `--no-figma` - Control Figma installation
 - `--github-desktop` / `--no-github-desktop` - Control GitHub Desktop installation
+- `--tailscale` / `--no-tailscale` - Control Tailscale installation
 - `--node` / `--no-node` - Control Node.js installation
 - `--go` / `--no-go` - Control Go installation
 - `--php` / `--no-php` - Control PHP installation
