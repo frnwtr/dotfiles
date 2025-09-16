@@ -212,6 +212,32 @@ fi
 log_info "Updating asdf shims..."
 asdf reshim
 
+# Clean up PHP-FPM configuration if PHP was installed
+if command -v php >/dev/null 2>&1; then
+    log_info "Cleaning up PHP-FPM configuration (keeping CLI only)..."
+    
+    # Stop any running PHP-FPM service
+    if command -v brew >/dev/null 2>&1 && brew services list | grep -q "php.*started"; then
+        log_info "Stopping PHP-FPM service..."
+        brew services stop php 2>/dev/null || true
+    fi
+    
+    # Remove FPM configuration files
+    PHP_VERSION_SHORT=$(php -r "echo PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION;" 2>/dev/null || echo "8.4")
+    FPM_CONF_PATH="/opt/homebrew/etc/php/$PHP_VERSION_SHORT/php-fpm.conf"
+    FPM_DIR_PATH="/opt/homebrew/etc/php/$PHP_VERSION_SHORT/php-fpm.d"
+    
+    if [[ -f "$FPM_CONF_PATH" ]]; then
+        log_info "Removing PHP-FPM configuration files..."
+        rm -f "$FPM_CONF_PATH" 2>/dev/null || true
+        rm -rf "$FPM_DIR_PATH" 2>/dev/null || true
+        rm -f "/opt/homebrew/var/log/php-fpm.log" 2>/dev/null || true
+        log_success "PHP-FPM configuration removed - PHP CLI only setup complete"
+    else
+        log_info "No PHP-FPM configuration found - PHP CLI only setup"
+    fi
+fi
+
 log_success "asdf setup complete!"
 
 # Show installed versions

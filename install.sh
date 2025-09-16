@@ -22,6 +22,9 @@ INSTALL_DATAGRIP="ask"
 INSTALL_PHPSTORM="ask"
 INSTALL_GOLAND="ask"
 INSTALL_WEBSTORM="ask"
+# Prevention options
+CLEAN_PHP_ONLY=false
+PREVENT_UNWANTED_PACKAGES=false
 QUIET_MODE=false
 
 # Parse command line arguments
@@ -139,6 +142,14 @@ while [[ $# -gt 0 ]]; do
             INSTALL_WEBSTORM="no"
             shift
             ;;
+        --clean-php-only)
+            CLEAN_PHP_ONLY=true
+            shift
+            ;;
+        --prevent-unwanted-packages)
+            PREVENT_UNWANTED_PACKAGES=true
+            shift
+            ;;
         --quiet|-q)
             QUIET_MODE=true
             shift
@@ -174,6 +185,8 @@ while [[ $# -gt 0 ]]; do
             echo "  --no-goland         Skip GoLand installation"
             echo "  --webstorm          Install WebStorm without asking"
             echo "  --no-webstorm       Skip WebStorm installation"
+            echo "  --clean-php-only    Ensure PHP CLI only setup (remove FPM)"
+            echo "  --prevent-unwanted-packages  Remove nginx, mysql, etc. (prefer Docker)"
             echo "  --quiet, -q         Run in quiet mode (use defaults where possible)"
             echo "  --help, -h          Show this help message"
             exit 0
@@ -250,6 +263,7 @@ log_info "Installing Homebrew and packages..."
 export INSTALL_GUI_APPS INSTALL_JETBRAINS INSTALL_DOCKER INSTALL_VSCODE INSTALL_FIGMA INSTALL_GITHUB_DESKTOP INSTALL_TAILSCALE QUIET_MODE
 export INSTALL_NODE INSTALL_GO INSTALL_PHP
 export INSTALL_DATAGRIP INSTALL_PHPSTORM INSTALL_GOLAND INSTALL_WEBSTORM
+export CLEAN_PHP_ONLY PREVENT_UNWANTED_PACKAGES
 bash "$DOTFILES_DIR/scripts/homebrew.sh"
 
 # Setup asdf and programming languages
@@ -259,6 +273,18 @@ bash "$DOTFILES_DIR/scripts/asdf.sh"
 # Setup shell configurations
 log_info "Setting up shell configurations..."
 bash "$DOTFILES_DIR/scripts/shell.sh"
+
+# Run prevention script if requested
+if [[ "$CLEAN_PHP_ONLY" == "true" ]] || [[ "$PREVENT_UNWANTED_PACKAGES" == "true" ]]; then
+    log_info "Running package prevention cleanup..."
+    if [[ "$CLEAN_PHP_ONLY" == "true" ]] && [[ "$PREVENT_UNWANTED_PACKAGES" == "true" ]]; then
+        bash "$DOTFILES_DIR/scripts/prevent-packages.sh" all
+    elif [[ "$PREVENT_UNWANTED_PACKAGES" == "true" ]]; then
+        bash "$DOTFILES_DIR/scripts/prevent-packages.sh" auto
+    elif [[ "$CLEAN_PHP_ONLY" == "true" ]]; then
+        bash "$DOTFILES_DIR/scripts/prevent-packages.sh" check
+    fi
+fi
 
 # Final message
 echo ""

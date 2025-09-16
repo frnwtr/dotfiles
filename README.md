@@ -42,6 +42,12 @@ This repository contains scripts to automatically set up a complete development 
 - **Syntax highlighting & autosuggestions** - Enhanced terminal experience
 - **Helpful aliases** - git shortcuts, docker commands, navigation helpers
 
+### 🚫 Package Prevention
+- **Clean PHP CLI setup** - Removes php-fpm, keeps only PHP CLI
+- **nginx prevention** - Prevents system nginx, promotes Docker usage
+- **Service prevention** - Avoids system databases/services, promotes containerization
+- **Shell protection** - Aliases prevent accidental service installations
+
 ## 🚀 Quick Start
 
 ### One-Line Installation
@@ -98,6 +104,8 @@ The installation script supports command-line options to control what gets insta
 - `--phpstorm` / `--no-phpstorm` - Control PHPStorm installation
 - `--goland` / `--no-goland` - Control GoLand installation
 - `--webstorm` / `--no-webstorm` - Control WebStorm installation
+- `--clean-php-only` - Ensure PHP CLI only setup (remove FPM)
+- `--prevent-unwanted-packages` - Remove nginx, mysql, etc. (prefer Docker)
 - `--quiet` / `-q` - Skip prompts, use defaults
 - `--help` / `-h` - Show help message
 
@@ -161,17 +169,25 @@ You can also run individual setup scripts:
 ./scripts/shell.sh
 ```
 
+### Package prevention (optional):
+```bash
+./scripts/prevent-packages.sh [check|auto|aliases|all]
+```
+
 ## 📁 Project Structure
 
 ```
 dotfiles/
 ├── AGENTS.md               # AI agent instructions
+├── PACKAGE_PREVENTION.md   # Package prevention guide
 ├── install.sh              # Main installation script
 ├── uninstall.sh            # Uninstallation script
+├── Brewfile.exclude        # Packages to avoid
 ├── scripts/
 │   ├── homebrew.sh         # Homebrew and packages setup
 │   ├── asdf.sh            # asdf and programming languages
-│   └── shell.sh           # Shell configuration
+│   ├── shell.sh           # Shell configuration
+│   └── prevent-packages.sh # Package prevention script
 ├── config/                # Configuration files (future)
 ├── shell/                 # Additional shell scripts (future)  
 └── README.md              # This file
@@ -216,23 +232,26 @@ npm install -g turbo
 
 ### PHP Development Tools
 
-When PHP is installed, you'll be prompted to choose development tools and servers:
+When PHP is installed, you'll be prompted to choose development tools:
 
 ```bash
 # Available options during installation:
-# 1) Laravel Valet - Local development environment for Mac
-# 2) Laravel Installer - Create Laravel projects
-# 3) Symfony CLI - Symfony development tools
-# 4) PHPUnit - PHP testing framework
-# 5) PHP_CodeSniffer - Code style checker
-# 6) Psalm - Static analysis tool
+# 1) Laravel Installer - Create Laravel projects
+# 2) Symfony CLI - Symfony development tools
+# 3) PHPUnit - PHP testing framework
+# 4) PHP_CodeSniffer - Code style checker
+# 5) Psalm - Static analysis tool
 
 # Composer (PHP dependency manager) is always installed
 # You can also install tools manually:
-composer global require laravel/valet
 composer global require laravel/installer
 composer global require phpunit/phpunit
 curl -sS https://get.symfony.com/cli/installer | bash
+
+# Note: Laravel Valet is excluded from this setup
+# For local development, use:
+php -S localhost:8000  # Built-in PHP server
+# Or use Docker for more complex setups
 ```
 
 ### Programming Language Versions

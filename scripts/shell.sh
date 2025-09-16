@@ -404,29 +404,21 @@ if command -v php >/dev/null 2>&1; then
     
     if [[ "$QUIET_MODE" != "true" ]]; then
         echo ""
-        echo "Popular PHP development servers and tools:"
-        echo "  1) Laravel Valet - Local development environment for Mac"
-        echo "  2) Laravel Installer - Create Laravel projects"
-        echo "  3) Symfony CLI - Symfony development tools"
-        echo "  4) PHPUnit - PHP testing framework"
-        echo "  5) PHP_CodeSniffer - Code style checker"
-        echo "  6) Psalm - Static analysis tool"
+        echo "Popular PHP development tools:"
+        echo "  1) Laravel Installer - Create Laravel projects"
+        echo "  2) Symfony CLI - Symfony development tools"
+        echo "  3) PHPUnit - PHP testing framework"
+        echo "  4) PHP_CodeSniffer - Code style checker"
+        echo "  5) Psalm - Static analysis tool"
         echo ""
-        read -p "Which PHP tools would you like to install? (1-6, multiple: 1,2,4): " -r PHP_TOOLS
+        echo "Note: Laravel Valet is not installed in this setup (conflicts with clean CLI environment)"
+        echo "For local development, use: php -S localhost:8000 or Docker containers"
+        echo ""
+        read -p "Which PHP tools would you like to install? (1-5, multiple: 1,2,3): " -r PHP_TOOLS
         echo ""
         
         # Parse selections
-        if [[ $PHP_TOOLS == *"1"* ]] || [[ $PHP_TOOLS == *"valet"* ]]; then
-            if ! command -v valet >/dev/null 2>&1; then
-                log_info "Installing Laravel Valet..."
-                composer global require laravel/valet
-                valet install 2>/dev/null || echo "Run 'valet install' manually after adding Composer to PATH"
-            else
-                log_info "Laravel Valet is already installed"
-            fi
-        fi
-        
-        if [[ $PHP_TOOLS == *"2"* ]] || [[ $PHP_TOOLS == *"laravel"* ]]; then
+        if [[ $PHP_TOOLS == *"1"* ]] || [[ $PHP_TOOLS == *"laravel"* ]]; then
             if ! command -v laravel >/dev/null 2>&1; then
                 log_info "Installing Laravel Installer..."
                 composer global require laravel/installer
@@ -435,7 +427,7 @@ if command -v php >/dev/null 2>&1; then
             fi
         fi
         
-        if [[ $PHP_TOOLS == *"3"* ]] || [[ $PHP_TOOLS == *"symfony"* ]]; then
+        if [[ $PHP_TOOLS == *"2"* ]] || [[ $PHP_TOOLS == *"symfony"* ]]; then
             if ! command -v symfony >/dev/null 2>&1; then
                 log_info "Installing Symfony CLI..."
                 curl -sS https://get.symfony.com/cli/installer | bash
@@ -446,17 +438,17 @@ if command -v php >/dev/null 2>&1; then
             fi
         fi
         
-        if [[ $PHP_TOOLS == *"4"* ]] || [[ $PHP_TOOLS == *"phpunit"* ]]; then
+        if [[ $PHP_TOOLS == *"3"* ]] || [[ $PHP_TOOLS == *"phpunit"* ]]; then
             log_info "Installing PHPUnit..."
             composer global require phpunit/phpunit
         fi
         
-        if [[ $PHP_TOOLS == *"5"* ]] || [[ $PHP_TOOLS == *"codesniffer"* ]]; then
+        if [[ $PHP_TOOLS == *"4"* ]] || [[ $PHP_TOOLS == *"codesniffer"* ]]; then
             log_info "Installing PHP_CodeSniffer..."
             composer global require squizlabs/php_codesniffer
         fi
         
-        if [[ $PHP_TOOLS == *"6"* ]] || [[ $PHP_TOOLS == *"psalm"* ]]; then
+        if [[ $PHP_TOOLS == *"5"* ]] || [[ $PHP_TOOLS == *"psalm"* ]]; then
             log_info "Installing Psalm..."
             composer global require vimeo/psalm
         fi
@@ -470,12 +462,12 @@ if command -v php >/dev/null 2>&1; then
         log_info "Skipping PHP tools selection (quiet mode)"
         log_info "You can install PHP tools manually:"
         log_info "  - Composer: curl -sS https://getcomposer.org/installer | php"
-        log_info "  - Laravel Valet: composer global require laravel/valet"
         log_info "  - Laravel Installer: composer global require laravel/installer"
         log_info "  - Symfony CLI: curl -sS https://get.symfony.com/cli/installer | bash"
         log_info "  - PHPUnit: composer global require phpunit/phpunit"
         log_info "  - PHP_CodeSniffer: composer global require squizlabs/php_codesniffer"
         log_info "  - Psalm: composer global require vimeo/psalm"
+        log_info "Note: Laravel Valet is excluded (use PHP built-in server or Docker)"
     fi
 fi
 

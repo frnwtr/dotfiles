@@ -1,0 +1,31 @@
+# Brewfile.exclude - Packages that should NOT be installed
+# This file documents packages that should be avoided in our development setup
+
+# Web servers - we prefer Docker containers for local development
+# nginx
+# apache2
+# httpd
+
+# PHP FPM - we only want PHP CLI
+# Note: php-fpm is bundled with PHP, but we remove its configuration
+
+# DNS services - avoid local DNS resolution
+# dnsmasq - often installed by Laravel Valet for .test domains
+# Note: Use system DNS or Docker networks instead
+
+# Database servers - prefer Docker containers
+# mysql
+# postgresql
+# redis
+# mongodb
+
+# Other services that should run in containers
+# elasticsearch
+# rabbitmq
+# memcached
+
+# Development environment note:
+# This setup prefers:
+# - PHP CLI only (no FPM)
+# - Docker for services (databases, web servers, etc.)
+# - Clean development environment without system services

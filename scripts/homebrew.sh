@@ -99,6 +99,27 @@ brew install --quiet htop
 brew install --quiet gh
 brew install --quiet retry
 
+# Prevent unwanted packages that might be installed as dependencies
+log_info "Setting up package prevention list..."
+if command -v brew >/dev/null 2>&1; then
+    # Create a prevention list for unwanted packages
+    UNWANTED_PACKAGES=("nginx" "php-fpm" "dnsmasq")
+    
+    for package in "${UNWANTED_PACKAGES[@]}"; do
+        if brew list "$package" >/dev/null 2>&1; then
+            log_warning "Found unwanted package: $package - considering removal"
+            if [[ "$QUIET_MODE" != "true" ]]; then
+                read -p "Do you want to remove $package? (y/N) " -n 1 -r
+                echo ""
+                if [[ $REPLY =~ ^[Yy]$ ]]; then
+                    log_info "Removing $package..."
+                    brew uninstall --ignore-dependencies "$package" || log_warning "Failed to remove $package"
+                fi
+            fi
+        fi
+    done
+fi
+
 # Modern CLI tools for better developer experience
 log_info "Installing modern CLI tools..."
 brew install --quiet bat          # Better cat with syntax highlighting
