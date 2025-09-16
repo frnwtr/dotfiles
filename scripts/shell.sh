@@ -289,76 +289,103 @@ else
     log_info "Powerlevel10k theme already installed"
 fi
 
-# Create npm global directory
-if command -v npm >/dev/null 2>&1; then
-    log_info "Setting up npm global directory..."
-    mkdir -p "$HOME/.npm-global"
-    npm config set prefix "$HOME/.npm-global"
-    
-    # Ask about additional package managers
-    log_info "Node.js is installed. Setting up package managers..."
-    
-    if [[ "$QUIET_MODE" != "true" ]]; then
-        echo ""
-        echo "Available Node.js package managers:"
-        echo "  1) npm (default - already installed)"
-        echo "  2) yarn - Fast, reliable dependency management"
-        echo "  3) pnpm - Fast, disk space efficient package manager"
-        echo "  4) bun - All-in-one JavaScript runtime & toolkit"
-        echo ""
-        read -p "Which additional package managers would you like to install? (1-4, multiple: 2,3): " -r PACKAGE_MANAGERS
-        echo ""
+# Source asdf to make newly installed tools available
+if [[ -f "/opt/homebrew/opt/asdf/libexec/asdf.sh" ]]; then
+    source "/opt/homebrew/opt/asdf/libexec/asdf.sh"
+elif [[ -f "$HOME/.asdf/asdf.sh" ]]; then
+    source "$HOME/.asdf/asdf.sh"
+fi
+
+# Check if Node.js was installed and set up package managers
+if [[ -n "$INSTALL_NODE" ]] && [[ "$INSTALL_NODE" != "no" ]]; then
+    # Node.js was supposed to be installed, check if it's available
+    if command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
+        # Create npm global directory
+        log_info "Setting up npm global directory..."
+        mkdir -p "$HOME/.npm-global"
+        npm config set prefix "$HOME/.npm-global"
         
-        # Parse selections
-        if [[ $PACKAGE_MANAGERS == *"2"* ]] || [[ $PACKAGE_MANAGERS == *"yarn"* ]]; then
-            if ! command -v yarn >/dev/null 2>&1; then
-                log_info "Installing Yarn..."
-                npm install -g yarn
-            else
-                log_info "Yarn is already installed"
-            fi
-        fi
+        # Ask about additional package managers
+        log_info "Node.js is installed. Setting up package managers..."
         
-        if [[ $PACKAGE_MANAGERS == *"3"* ]] || [[ $PACKAGE_MANAGERS == *"pnpm"* ]]; then
-            if ! command -v pnpm >/dev/null 2>&1; then
-                log_info "Installing pnpm..."
-                npm install -g pnpm
-            else
-                log_info "pnpm is already installed"
+        if [[ "$QUIET_MODE" != "true" ]]; then
+            echo ""
+            echo "Available Node.js package managers:"
+            echo "  1) npm (default - already installed)"
+            echo "  2) yarn - Fast, reliable dependency management"
+            echo "  3) pnpm - Fast, disk space efficient package manager"
+            echo "  4) bun - All-in-one JavaScript runtime & toolkit"
+            echo ""
+            read -p "Which additional package managers would you like to install? (1-4, multiple: 2,3): " -r PACKAGE_MANAGERS
+            echo ""
+            
+            # Parse selections
+            if [[ $PACKAGE_MANAGERS == *"2"* ]] || [[ $PACKAGE_MANAGERS == *"yarn"* ]]; then
+                if ! command -v yarn >/dev/null 2>&1; then
+                    log_info "Installing Yarn..."
+                    npm install -g yarn
+                else
+                    log_info "Yarn is already installed"
+                fi
             fi
-        fi
-        
-        if [[ $PACKAGE_MANAGERS == *"4"* ]] || [[ $PACKAGE_MANAGERS == *"bun"* ]]; then
-            if ! command -v bun >/dev/null 2>&1; then
-                log_info "Installing Bun..."
-                curl -fsSL https://bun.sh/install | bash
-                # Add bun to PATH for current session
-                export PATH="$HOME/.bun/bin:$PATH"
-            else
-                log_info "Bun is already installed"
+            
+            if [[ $PACKAGE_MANAGERS == *"3"* ]] || [[ $PACKAGE_MANAGERS == *"pnpm"* ]]; then
+                if ! command -v pnpm >/dev/null 2>&1; then
+                    log_info "Installing pnpm..."
+                    npm install -g pnpm
+                else
+                    log_info "pnpm is already installed"
+                fi
             fi
-        fi
-        
-        # Ask about Turborepo
-        echo ""
-        read -p "Would you like to install Turborepo (monorepo build system)? (y/N): " -n 1 -r INSTALL_TURBO
-        echo ""
-        if [[ $INSTALL_TURBO =~ ^[Yy]$ ]]; then
-            if ! command -v turbo >/dev/null 2>&1; then
-                log_info "Installing Turborepo..."
-                npm install -g turbo
-            else
-                log_info "Turborepo is already installed"
+            
+            if [[ $PACKAGE_MANAGERS == *"4"* ]] || [[ $PACKAGE_MANAGERS == *"bun"* ]]; then
+                if ! command -v bun >/dev/null 2>&1; then
+                    log_info "Installing Bun..."
+                    curl -fsSL https://bun.sh/install | bash
+                    # Add bun to PATH for current session
+                    export PATH="$HOME/.bun/bin:$PATH"
+                else
+                    log_info "Bun is already installed"
+                fi
             fi
+            
+            # Ask about Turborepo
+            echo ""
+            read -p "Would you like to install Turborepo (monorepo build system)? (y/N): " -n 1 -r INSTALL_TURBO
+            echo ""
+            if [[ $INSTALL_TURBO =~ ^[Yy]$ ]]; then
+                if ! command -v turbo >/dev/null 2>&1; then
+                    log_info "Installing Turborepo..."
+                    npm install -g turbo
+                else
+                    log_info "Turborepo is already installed"
+                fi
+            fi
+        else
+            log_info "Skipping package manager selection (quiet mode)"
+            log_info "You can install additional package managers manually:"
+            log_info "  - Yarn: npm install -g yarn"
+            log_info "  - pnpm: npm install -g pnpm"
+            log_info "  - Bun: curl -fsSL https://bun.sh/install | bash"
+            log_info "  - Turborepo: npm install -g turbo"
         fi
     else
-        log_info "Skipping package manager selection (quiet mode)"
-        log_info "You can install additional package managers manually:"
+        log_warning "Node.js was supposed to be installed but is not available in PATH"
+        log_info "You may need to restart your terminal or run: source ~/.zshrc"
+        log_info "You can install package managers manually later:"
         log_info "  - Yarn: npm install -g yarn"
         log_info "  - pnpm: npm install -g pnpm"
         log_info "  - Bun: curl -fsSL https://bun.sh/install | bash"
         log_info "  - Turborepo: npm install -g turbo"
     fi
+elif command -v npm >/dev/null 2>&1; then
+    # Node.js is already available (probably pre-installed)
+    log_info "Found existing Node.js installation"
+    log_info "You can install package managers manually if needed:"
+    log_info "  - Yarn: npm install -g yarn"
+    log_info "  - pnpm: npm install -g pnpm"
+    log_info "  - Bun: curl -fsSL https://bun.sh/install | bash"
+    log_info "  - Turborepo: npm install -g turbo"
 fi
 
 # PHP Composer and server tools setup
