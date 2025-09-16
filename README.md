@@ -46,14 +46,14 @@ This repository contains scripts to automatically set up a complete development 
 ### One-Line Installation
 
 ```bash
-bash <(curl -s https://raw.githubusercontent.com/yourusername/dotfiles/main/install.sh)
+bash <(curl -s https://raw.githubusercontent.com/frnwtr/dotfiles/main/install.sh)
 ```
 
 ### Manual Installation
 
 1. **Clone this repository:**
    ```bash
-   git clone https://github.com/yourusername/dotfiles.git ~/dotfiles
+   git clone https://github.com/frnwtr/dotfiles.git ~/dotfiles
    cd ~/dotfiles
    ```
 
