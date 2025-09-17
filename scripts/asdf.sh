@@ -388,4 +388,3 @@ else
 fi
 
 log_success "Programming languages setup complete!"
-y
