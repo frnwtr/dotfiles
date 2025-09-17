@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # asdf Version Manager Setup Script
-# Installs asdf and sets up Node.js, Go, and PHP
+# Installs asdf and sets up programming languages: Node.js, Go, PHP, Python
+# Also installs related tools: Composer, Yarn, pnpm, Bun
 
 set -e
 
@@ -79,6 +80,27 @@ else
     log_info "asdf is already installed"
 fi
 
+# Install basic asdf dependencies (shared across all languages)
+log_info "Installing basic asdf dependencies..."
+if command -v brew >/dev/null 2>&1; then
+    # Basic dependencies for all asdf language installations
+    BASIC_DEPENDENCIES=(
+        "gawk" "xz" "tcl-tk" "gdbm" "libffi" "libtool" "unixodbc"
+    )
+    
+    for dep in "${BASIC_DEPENDENCIES[@]}"; do
+        if brew list "$dep" >/dev/null 2>&1; then
+            log_info "$dep already installed"
+        else
+            log_info "Installing $dep..."
+            brew install "$dep" --quiet || log_warning "Failed to install $dep"
+        fi
+    done
+else
+    log_error "Homebrew not available for dependencies"
+    exit 1
+fi
+
 # Source asdf in current shell - try Homebrew first, then git installation
 if [ -f "/opt/homebrew/opt/asdf/libexec/asdf.sh" ]; then
     source "/opt/homebrew/opt/asdf/libexec/asdf.sh"
@@ -107,23 +129,66 @@ install_plugin() {
     fi
 }
 
+
+# Initialize version variables
+NODEJS_VERSION=""
+YARN_VERSION=""
+PNPM_VERSION=""
+BUN_VERSION=""
+GOLANG_VERSION=""
+PHP_VERSION=""
+COMPOSER_VERSION=""
+PYTHON_VERSION=""
+
 # Install Node.js (optional)
 if ask_language_confirmation "Node.js" "INSTALL_NODE" "y"; then
     log_info "Setting up Node.js..."
-    install_plugin "nodejs" "https://github.com/asdf-vm/asdf-nodejs.git"
     
-    # Install latest LTS Node.js
-    log_info "Installing latest LTS Node.js..."
-    NODEJS_VERSION=$(asdf latest nodejs)
+    # Install Node.js
+    install_plugin "nodejs" "https://github.com/asdf-vm/asdf-nodejs.git"
+    log_info "Installing Node.js LTS..."
+    NODEJS_VERSION="lts"
     asdf install nodejs "$NODEJS_VERSION" || log_warning "Node.js installation may have failed"
-    asdf set nodejs "$NODEJS_VERSION" || log_warning "Failed to set Node.js version"
+    
+    # Ask about package managers individually
+    echo ""
+    log_info "Node.js package managers (optional):"
+    
+    # Install Yarn (optional)
+    if [[ "$INSTALL_YARN" == "yes" ]] || ([[ "$INSTALL_YARN" == "ask" ]] && [[ "$QUIET_MODE" != "true" ]] && { read -p "Do you want to install Yarn? (y/N) " -n 1 -r; echo ""; [[ $REPLY =~ ^[Yy]$ ]]; }); then
+        log_info "Setting up Yarn..."
+        install_plugin "yarn"
+        YARN_VERSION=$(asdf latest yarn)
+        asdf install yarn "$YARN_VERSION" || log_warning "Yarn installation may have failed"
+    else
+        log_info "Skipping Yarn installation"
+    fi
+    
+    # Install pnpm (optional)
+    if [[ "$INSTALL_PNPM" == "yes" ]] || ([[ "$INSTALL_PNPM" == "ask" ]] && [[ "$QUIET_MODE" != "true" ]] && { read -p "Do you want to install pnpm? (y/N) " -n 1 -r; echo ""; [[ $REPLY =~ ^[Yy]$ ]]; }); then
+        log_info "Setting up pnpm..."
+        install_plugin "pnpm" "https://github.com/jonathanmorley/asdf-pnpm.git"
+        PNPM_VERSION=$(asdf latest pnpm)
+        asdf install pnpm "$PNPM_VERSION" || log_warning "pnpm installation may have failed"
+    else
+        log_info "Skipping pnpm installation"
+    fi
+    
+    # Install Bun (optional)
+    if [[ "$INSTALL_BUN" == "yes" ]] || ([[ "$INSTALL_BUN" == "ask" ]] && [[ "$QUIET_MODE" != "true" ]] && { read -p "Do you want to install Bun? (y/N) " -n 1 -r; echo ""; [[ $REPLY =~ ^[Yy]$ ]]; }); then
+        log_info "Setting up Bun..."
+        install_plugin "bun" "https://github.com/cometkim/asdf-bun.git"
+        BUN_VERSION=$(asdf latest bun)
+        asdf install bun "$BUN_VERSION" || log_warning "Bun installation may have failed"
+    else
+        log_info "Skipping Bun installation"
+    fi
 else
     log_info "Skipping Node.js installation"
-    NODEJS_VERSION=""
 fi
 
 # Install Go (optional)
-if ask_language_confirmation "Go" "INSTALL_GO" "y"; then
+if ask_language_confirmation "Go" "INSTALL_GO" "n"; then
     log_info "Setting up Go..."
     install_plugin "golang" "https://github.com/asdf-community/asdf-golang.git"
     
@@ -131,169 +196,196 @@ if ask_language_confirmation "Go" "INSTALL_GO" "y"; then
     log_info "Installing latest Go..."
     GOLANG_VERSION=$(asdf latest golang)
     asdf install golang "$GOLANG_VERSION" || log_warning "Go installation may have failed"
-    asdf set golang "$GOLANG_VERSION" || log_warning "Failed to set Go version"
 else
     log_info "Skipping Go installation"
-    GOLANG_VERSION=""
 fi
 
-# Install PHP (optional)
-if ask_language_confirmation "PHP" "INSTALL_PHP" "y"; then
-    log_info "Setting up PHP..."
-    install_plugin "php" "https://github.com/asdf-community/asdf-php.git"
-
-# Install PHP build dependencies via Homebrew
-log_info "Installing PHP build dependencies via Homebrew..."
-if command -v brew >/dev/null 2>&1; then
-    # Core dependencies for PHP compilation on macOS
-    HOMEBREW_DEPENDENCIES=(
-        "autoconf"
-        "bison"
-        "re2c"
-        "pkg-config"
-        "libxml2"
-        "openssl@3"
-        "icu4c"
-        "libzip"
-        "oniguruma"
-        "zlib"
-        "libjpeg"
-        "libpng"
-        "freetype"
-        "libgd"
-        "gettext"
-        "curl"
-        "libedit"
-        "libsodium"
-        "gmp"
-    )
+# Install PHP via asdf (optional)
+if ask_language_confirmation "PHP ecosystem (PHP with asdf)" "INSTALL_PHP" "n"; then
+    log_info "Setting up PHP ecosystem with asdf..."
     
-    for dep in "${HOMEBREW_DEPENDENCIES[@]}"; do
-        if brew list "$dep" >/dev/null 2>&1; then
-            log_info "$dep already installed"
-        else
-            log_info "Installing $dep..."
-            brew install "$dep" || log_warning "Failed to install $dep"
+    # Check and remove Homebrew PHP if present
+    if command -v brew >/dev/null 2>&1; then
+        if brew list php >/dev/null 2>&1; then
+            log_info "Removing existing Homebrew PHP installation..."
+            # Stop PHP-FPM service if running
+            if brew services list | grep -q "php.*started"; then
+                log_info "Stopping PHP-FPM service..."
+                brew services stop php 2>/dev/null || true
+            fi
+            # Uninstall Homebrew PHP
+            brew uninstall --ignore-dependencies php || log_warning "Failed to uninstall Homebrew PHP"
         fi
-    done
-else
-    log_error "Homebrew not available for PHP dependencies"
-    exit 1
-fi
-
-# Set up comprehensive environment for PHP compilation
-log_info "Setting up compilation environment..."
-export PKG_CONFIG_PATH="/opt/homebrew/lib/pkgconfig:/opt/homebrew/share/pkgconfig:$PKG_CONFIG_PATH"
-export LDFLAGS="-L/opt/homebrew/lib -L/opt/homebrew/opt/openssl@3/lib -L/opt/homebrew/opt/icu4c/lib -L/opt/homebrew/opt/libedit/lib -L/opt/homebrew/opt/bison/lib $LDFLAGS"
-export CPPFLAGS="-I/opt/homebrew/include -I/opt/homebrew/opt/openssl@3/include -I/opt/homebrew/opt/icu4c/include -I/opt/homebrew/opt/libedit/include -I/opt/homebrew/opt/bison/include $CPPFLAGS"
-export PATH="/opt/homebrew/opt/bison/bin:$PATH"
-
-# Try to install PHP via asdf
-log_info "Installing PHP via asdf..."
-PHP_VERSION=$(asdf latest php 2>/dev/null || echo "8.3.15")
-log_info "Installing PHP ${PHP_VERSION}..."
-
-if asdf list php 2>/dev/null | grep -q "$PHP_VERSION"; then
-    log_info "PHP $PHP_VERSION already installed via asdf"
-    asdf set php "$PHP_VERSION" || log_warning "Failed to set PHP version"
-else
-    log_info "This may take 20-30 minutes. Installing PHP $PHP_VERSION..."
-    if asdf install php "$PHP_VERSION"; then
-        log_success "PHP $PHP_VERSION installed successfully"
-        asdf set php "$PHP_VERSION" || log_warning "Failed to set PHP version"
+        
+        # Install PHP build dependencies
+        log_info "Installing PHP build dependencies..."
+        PHP_DEPENDENCIES=(
+            "autoconf" "automake" "bison" "freetype" "gd" "gettext" 
+            "icu4c" "krb5" "libedit" "libiconv" "libjpeg" "libpng" 
+            "libxml2" "libzip" "pkg-config" "re2c" "zlib"
+            "gmp" "libsodium" "imagemagick" "ffmpeg" "oniguruma" "sqlite"
+        )
+        
+        for dep in "${PHP_DEPENDENCIES[@]}"; do
+            if brew list "$dep" >/dev/null 2>&1; then
+                log_info "$dep already installed"
+            else
+                log_info "Installing $dep..."
+                brew install "$dep" --quiet || log_warning "Failed to install $dep"
+            fi
+        done
     else
-        log_error "PHP installation via asdf failed"
-        log_info "Falling back to Homebrew PHP installation..."
-        brew install php || log_error "Homebrew PHP installation also failed"
+        log_error "Homebrew not available for PHP dependencies"
+        exit 1
     fi
+    
+    # Set up compilation environment for PHP
+    export PKG_CONFIG_PATH="/opt/homebrew/lib/pkgconfig:/opt/homebrew/share/pkgconfig:$PKG_CONFIG_PATH"
+    export LDFLAGS="-L/opt/homebrew/lib -L/opt/homebrew/opt/openssl@3/lib -L/opt/homebrew/opt/icu4c/lib -L/opt/homebrew/opt/libedit/lib -L/opt/homebrew/opt/bison/lib -L/opt/homebrew/opt/libiconv/lib -L/opt/homebrew/opt/krb5/lib $LDFLAGS"
+    export CPPFLAGS="-I/opt/homebrew/include -I/opt/homebrew/opt/openssl@3/include -I/opt/homebrew/opt/icu4c/include -I/opt/homebrew/opt/libedit/include -I/opt/homebrew/opt/bison/include -I/opt/homebrew/opt/libiconv/include -I/opt/homebrew/opt/krb5/include $CPPFLAGS"
+    export PATH="/opt/homebrew/opt/bison/bin:$PATH"
+    
+    # PHP compilation configuration - required for successful PHP build
+    export PHP_WITHOUT_PEAR=yes
+    export PHP_CONFIGURE_OPTIONS="--with-openssl=/opt/homebrew/opt/openssl@3 --with-iconv=/opt/homebrew/opt/libiconv --with-kerberos=/opt/homebrew/opt/krb5"
+    
+    # Install PHP with custom build configuration
+    install_plugin "php" "https://github.com/asdf-community/asdf-php.git"
+    log_info "Installing latest PHP with enhanced build configuration (this may take 20-30 minutes)..."
+    log_info "Build features: OpenSSL 3.x, iconv, Kerberos, GMP, libsodium, ImageMagick, FFmpeg support"
+    PHP_VERSION=$(asdf latest php)
+    asdf install php "$PHP_VERSION" || log_warning "PHP installation may have failed"
+    
+    # Note: Composer is installed automatically by asdf-php plugin
+    log_info "Composer is installed automatically with asdf PHP"
+    COMPOSER_VERSION="asdf-managed"
+    
+else
+    log_info "Skipping PHP ecosystem installation"
 fi
 
-# Reshim to update shims
+# Install Python (optional)
+if ask_language_confirmation "Python" "INSTALL_PYTHON" "n"; then
+    log_info "Setting up Python..."
+    install_plugin "python"
+    
+    log_info "Installing latest Python..."
+    PYTHON_VERSION=$(asdf latest python)
+    asdf install python "$PYTHON_VERSION" || log_warning "Python installation may have failed"
+else
+    log_info "Skipping Python installation"
+fi
+
+
+# Reshim to update all shims
 log_info "Updating asdf shims..."
 asdf reshim
-
-# Clean up PHP-FPM configuration if PHP was installed
-if command -v php >/dev/null 2>&1; then
-    log_info "Cleaning up PHP-FPM configuration (keeping CLI only)..."
-    
-    # Stop any running PHP-FPM service
-    if command -v brew >/dev/null 2>&1 && brew services list | grep -q "php.*started"; then
-        log_info "Stopping PHP-FPM service..."
-        brew services stop php 2>/dev/null || true
-    fi
-    
-    # Remove FPM configuration files
-    PHP_VERSION_SHORT=$(php -r "echo PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION;" 2>/dev/null || echo "8.4")
-    FPM_CONF_PATH="/opt/homebrew/etc/php/$PHP_VERSION_SHORT/php-fpm.conf"
-    FPM_DIR_PATH="/opt/homebrew/etc/php/$PHP_VERSION_SHORT/php-fpm.d"
-    
-    if [[ -f "$FPM_CONF_PATH" ]]; then
-        log_info "Removing PHP-FPM configuration files..."
-        rm -f "$FPM_CONF_PATH" 2>/dev/null || true
-        rm -rf "$FPM_DIR_PATH" 2>/dev/null || true
-        rm -f "/opt/homebrew/var/log/php-fpm.log" 2>/dev/null || true
-        log_success "PHP-FPM configuration removed - PHP CLI only setup complete"
-    else
-        log_info "No PHP-FPM configuration found - PHP CLI only setup"
-    fi
-fi
 
 log_success "asdf setup complete!"
 
 # Show installed versions
 echo ""
 log_info "Installed versions:"
+
+# Node.js ecosystem
 if command -v node >/dev/null 2>&1; then
     echo "  Node.js: $(node --version)"
     echo "  npm: $(npm --version)"
 else
-    echo "  Node.js: Installation may have failed"
+    echo "  Node.js: Not installed"
 fi
 
+if command -v yarn >/dev/null 2>&1; then
+    echo "  Yarn: $(yarn --version)"
+fi
+
+if command -v pnpm >/dev/null 2>&1; then
+    echo "  pnpm: $(pnpm --version)"
+fi
+
+if command -v bun >/dev/null 2>&1; then
+    echo "  Bun: $(bun --version)"
+fi
+
+# Other languages
 if command -v go >/dev/null 2>&1; then
     echo "  Go: $(go version | cut -d' ' -f3-4)"
 else
-    echo "  Go: Installation may have failed"
+    echo "  Go: Not installed"
 fi
 
 if command -v php >/dev/null 2>&1; then
     echo "  PHP: $(php --version | head -1)"
 else
-    echo "  PHP: Not available"
+    echo "  PHP: Not installed"
 fi
+
+if command -v composer >/dev/null 2>&1; then
+    echo "  Composer: $(composer --version --no-ansi | cut -d' ' -f1-3)"
+fi
+
+if command -v python >/dev/null 2>&1; then
+    echo "  Python: $(python --version)"
+else
+    echo "  Python: Not installed"
+fi
+
 
 # Create .tool-versions file in home directory
 log_info "Creating global .tool-versions file..."
 TOOL_VERSIONS_CONTENT=""
 
-# Add installed languages to .tool-versions
-if [[ -n "$NODEJS_VERSION" ]]; then
-    TOOL_VERSIONS_CONTENT="nodejs $NODEJS_VERSION"
-fi
-
-if [[ -n "$GOLANG_VERSION" ]]; then
-    if [[ -n "$TOOL_VERSIONS_CONTENT" ]]; then
-        TOOL_VERSIONS_CONTENT="$TOOL_VERSIONS_CONTENT\ngolang $GOLANG_VERSION"
-    else
-        TOOL_VERSIONS_CONTENT="golang $GOLANG_VERSION"
+# Helper function to add to tool-versions
+add_to_tool_versions() {
+    local tool="$1"
+    local version="$2"
+    if [[ -n "$version" ]]; then
+        if [[ -n "$TOOL_VERSIONS_CONTENT" ]]; then
+            TOOL_VERSIONS_CONTENT="$TOOL_VERSIONS_CONTENT\n$tool $version"
+        else
+            TOOL_VERSIONS_CONTENT="$tool $version"
+        fi
     fi
-fi
+}
 
-# Add PHP to .tool-versions if installed via asdf
-if [[ -n "$PHP_VERSION" ]] && asdf list php 2>/dev/null | grep -q "$PHP_VERSION"; then
-    if [[ -n "$TOOL_VERSIONS_CONTENT" ]]; then
-        TOOL_VERSIONS_CONTENT="$TOOL_VERSIONS_CONTENT\nphp $PHP_VERSION"
-    else
-        TOOL_VERSIONS_CONTENT="php $PHP_VERSION"
-    fi
-fi
-
-# Only create .tool-versions if we have content
+# Add installed tools to .tool-versions (only asdf-managed tools with actual versions)
+add_to_tool_versions "php" "$PHP_VERSION"
+# Note: composer is not managed by asdf, installed globally in ~/.local/bin
+add_to_tool_versions "nodejs" "$NODEJS_VERSION"
+# Only add package managers if they were actually installed
+add_to_tool_versions "yarn" "$YARN_VERSION"
+add_to_tool_versions "pnpm" "$PNPM_VERSION"
+add_to_tool_versions "bun" "$BUN_VERSION"
+add_to_tool_versions "golang" "$GOLANG_VERSION"
+add_to_tool_versions "python" "$PYTHON_VERSION"
+# Write .tool-versions files
 if [[ -n "$TOOL_VERSIONS_CONTENT" ]]; then
+    # Create in home directory
     printf "$TOOL_VERSIONS_CONTENT" > "$HOME/.tool-versions"
+    log_success "Global .tool-versions file created in $HOME"
+    
+    # Also create in dotfiles directory for reference
+    DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+    printf "$TOOL_VERSIONS_CONTENT" > "$DOTFILES_DIR/.tool-versions"
+    log_info "Reference .tool-versions file updated in $DOTFILES_DIR"
+    
+    # Set global versions explicitly (using modern asdf syntax)
+    log_info "Setting global asdf versions..."
+    [[ -n "$PHP_VERSION" ]] && asdf set -p php "$PHP_VERSION" 2>/dev/null || true
+    [[ -n "$NODEJS_VERSION" ]] && asdf set -p nodejs "$NODEJS_VERSION" 2>/dev/null || true
+    [[ -n "$YARN_VERSION" ]] && asdf set -p yarn "$YARN_VERSION" 2>/dev/null || true
+    [[ -n "$PNPM_VERSION" ]] && asdf set -p pnpm "$PNPM_VERSION" 2>/dev/null || true
+    [[ -n "$BUN_VERSION" ]] && asdf set -p bun "$BUN_VERSION" 2>/dev/null || true
+    [[ -n "$GOLANG_VERSION" ]] && asdf set -p golang "$GOLANG_VERSION" 2>/dev/null || true
+    [[ -n "$PYTHON_VERSION" ]] && asdf set -p python "$PYTHON_VERSION" 2>/dev/null || true
+    
+    # Final reshim to ensure all shims are updated
+    asdf reshim
+    
+    log_success "All global versions set successfully"
 else
     log_info "No languages installed, skipping .tool-versions creation"
 fi
 
 log_success "Programming languages setup complete!"
-fi
+y

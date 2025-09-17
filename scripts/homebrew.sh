@@ -98,6 +98,7 @@ brew install --quiet tree
 brew install --quiet htop
 brew install --quiet gh
 brew install --quiet retry
+brew install --quiet bc          # Calculator (required by passion theme)
 
 # Prevent unwanted packages that might be installed as dependencies
 log_info "Setting up package prevention list..."
@@ -208,6 +209,30 @@ else
     log_info "Skipping Tailscale installation"
 fi
 
+# Install ChatGPT (optional)
+if should_install "ChatGPT (AI Assistant)" "INSTALL_CHATGPT" "n"; then
+    if ! brew list --cask chatgpt >/dev/null 2>&1; then
+        log_info "Installing ChatGPT..."
+        brew install --cask --quiet chatgpt
+    else
+        log_info "ChatGPT is already installed"
+    fi
+else
+    log_info "Skipping ChatGPT installation"
+fi
+
+# Install Claude (optional)
+if should_install "Claude (AI Assistant)" "INSTALL_CLAUDE" "n"; then
+    if ! brew list --cask claude >/dev/null 2>&1; then
+        log_info "Installing Claude..."
+        brew install --cask --quiet claude
+    else
+        log_info "Claude is already installed"
+    fi
+else
+    log_info "Skipping Claude installation"
+fi
+
 # Install JetBrains Toolbox (if any IDE is selected)
 INSTALL_ANY_JETBRAINS=false
 if [[ "$INSTALL_DATAGRIP" == "yes" ]] || [[ "$INSTALL_PHPSTORM" == "yes" ]] || [[ "$INSTALL_GOLAND" == "yes" ]] || [[ "$INSTALL_WEBSTORM" == "yes" ]]; then
@@ -276,19 +301,15 @@ else
     log_info "Skipping WebStorm installation"
 fi
 
-# Install asdf dependencies
-log_info "Installing asdf dependencies..."
+# Install core asdf dependencies
+log_info "Installing core asdf dependencies..."
 brew install --quiet coreutils
-brew install --quiet curl
-brew install --quiet git
 brew install --quiet gpg
 brew install --quiet autoconf
-brew install --quiet openssl
+brew install --quiet openssl@3
 brew install --quiet libyaml
 brew install --quiet readline
-brew install --quiet libxslt
-brew install --quiet libtool
-brew install --quiet unixodbc
+# Note: Additional asdf dependencies are installed by asdf.sh script
 
 log_success "Homebrew setup complete!"
 

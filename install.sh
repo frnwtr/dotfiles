@@ -13,10 +13,17 @@ INSTALL_VSCODE="ask"
 INSTALL_FIGMA="ask"
 INSTALL_GITHUB_DESKTOP="ask"
 INSTALL_TAILSCALE="ask"
+INSTALL_CHATGPT="ask"
+INSTALL_CLAUDE="ask"
 # Programming languages
 INSTALL_NODE="ask"
 INSTALL_GO="ask"
 INSTALL_PHP="ask"
+INSTALL_PYTHON="ask"
+# Node.js package managers
+INSTALL_YARN="ask"
+INSTALL_PNPM="ask"
+INSTALL_BUN="ask"
 # JetBrains IDEs
 INSTALL_DATAGRIP="ask"
 INSTALL_PHPSTORM="ask"
@@ -86,6 +93,22 @@ while [[ $# -gt 0 ]]; do
             INSTALL_TAILSCALE="no"
             shift
             ;;
+        --chatgpt)
+            INSTALL_CHATGPT="yes"
+            shift
+            ;;
+        --no-chatgpt)
+            INSTALL_CHATGPT="no"
+            shift
+            ;;
+        --claude)
+            INSTALL_CLAUDE="yes"
+            shift
+            ;;
+        --no-claude)
+            INSTALL_CLAUDE="no"
+            shift
+            ;;
         --node)
             INSTALL_NODE="yes"
             shift
@@ -108,6 +131,38 @@ while [[ $# -gt 0 ]]; do
             ;;
         --no-php)
             INSTALL_PHP="no"
+            shift
+            ;;
+        --python)
+            INSTALL_PYTHON="yes"
+            shift
+            ;;
+        --no-python)
+            INSTALL_PYTHON="no"
+            shift
+            ;;
+        --yarn)
+            INSTALL_YARN="yes"
+            shift
+            ;;
+        --no-yarn)
+            INSTALL_YARN="no"
+            shift
+            ;;
+        --pnpm)
+            INSTALL_PNPM="yes"
+            shift
+            ;;
+        --no-pnpm)
+            INSTALL_PNPM="no"
+            shift
+            ;;
+        --bun)
+            INSTALL_BUN="yes"
+            shift
+            ;;
+        --no-bun)
+            INSTALL_BUN="no"
             shift
             ;;
         --datagrip)
@@ -171,12 +226,24 @@ while [[ $# -gt 0 ]]; do
             echo "  --no-github-desktop Skip GitHub Desktop installation"
             echo "  --tailscale         Install Tailscale without asking"
             echo "  --no-tailscale      Skip Tailscale installation"
+            echo "  --chatgpt           Install ChatGPT without asking"
+            echo "  --no-chatgpt        Skip ChatGPT installation"
+            echo "  --claude            Install Claude without asking"
+            echo "  --no-claude         Skip Claude installation"
             echo "  --node              Install Node.js without asking"
             echo "  --no-node           Skip Node.js installation"
             echo "  --go                Install Go without asking"
             echo "  --no-go             Skip Go installation"
             echo "  --php               Install PHP without asking"
             echo "  --no-php            Skip PHP installation"
+            echo "  --python            Install Python without asking"
+            echo "  --no-python         Skip Python installation"
+            echo "  --yarn              Install Yarn without asking"
+            echo "  --no-yarn           Skip Yarn installation"
+            echo "  --pnpm              Install pnpm without asking"
+            echo "  --no-pnpm           Skip pnpm installation"
+            echo "  --bun               Install Bun without asking"
+            echo "  --no-bun            Skip Bun installation"
             echo "  --datagrip          Install DataGrip without asking"
             echo "  --no-datagrip       Skip DataGrip installation"
             echo "  --phpstorm          Install PHPStorm without asking"
@@ -229,19 +296,26 @@ DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Welcome message
 echo "🚀 Welcome to the Dotfiles Setup!"
 echo "This will install and configure:"
-echo "  • Homebrew & essential tools (git, curl, wget, jq, tree, htop, gh, retry)"
-echo "  • asdf (version manager)"
-echo "  • Node.js, Go, PHP"
-echo "  • Shell configurations"
 echo ""
-echo "Optional applications (will prompt or use flags):"
+echo "📦 Core Tools:"
+echo "  • Homebrew & essential CLI tools (git, curl, jq, tree, htop, gh, etc.)"
+echo "  • asdf (version manager for programming languages)"
+echo "  • Modern CLI tools (bat, fd, ripgrep, fzf, lazygit, etc.)"
+echo "  • Oh My Zsh with Powerlevel10k theme"
+echo ""
+echo "💻 Programming Languages (optional):"
+echo "  • Node.js (with optional package managers: Yarn, pnpm, Bun)"
+echo "  • Go"
+echo "  • PHP ecosystem (PHP, Composer)"
+echo "  • Python"
+echo ""
+echo "🖥️  GUI Applications (optional):"
 echo "  • Docker Desktop"
 echo "  • Visual Studio Code"
 echo "  • JetBrains IDEs (Toolbox, DataGrip, PHPStorm, GoLand, WebStorm)"
 echo "  • Warp Terminal"
-echo "  • Figma (Design tool)"
-echo "  • GitHub Desktop"
-echo "  • Tailscale (VPN mesh networking)"
+echo "  • Figma, GitHub Desktop, Tailscale"
+echo "  • AI Assistants (ChatGPT, Claude)"
 echo ""
 
 # Ask for confirmation
@@ -260,8 +334,9 @@ fi
 
 # Install Homebrew and packages
 log_info "Installing Homebrew and packages..."
-export INSTALL_GUI_APPS INSTALL_JETBRAINS INSTALL_DOCKER INSTALL_VSCODE INSTALL_FIGMA INSTALL_GITHUB_DESKTOP INSTALL_TAILSCALE QUIET_MODE
-export INSTALL_NODE INSTALL_GO INSTALL_PHP
+export INSTALL_GUI_APPS INSTALL_JETBRAINS INSTALL_DOCKER INSTALL_VSCODE INSTALL_FIGMA INSTALL_GITHUB_DESKTOP INSTALL_TAILSCALE INSTALL_CHATGPT INSTALL_CLAUDE QUIET_MODE
+export INSTALL_NODE INSTALL_GO INSTALL_PHP INSTALL_PYTHON
+export INSTALL_YARN INSTALL_PNPM INSTALL_BUN
 export INSTALL_DATAGRIP INSTALL_PHPSTORM INSTALL_GOLAND INSTALL_WEBSTORM
 export CLEAN_PHP_ONLY PREVENT_UNWANTED_PACKAGES
 bash "$DOTFILES_DIR/scripts/homebrew.sh"
@@ -288,17 +363,30 @@ fi
 
 # Final message
 echo ""
-log_success "🎉 Setup complete!"
+log_success "🎉 Dotfiles Setup Complete!"
 echo ""
-echo "Next steps:"
-echo "1. Restart your terminal or run: source ~/.zshrc"
-echo "2. Open Warp terminal for the best experience"
-echo "3. Start Docker Desktop if needed"
+echo "📝 Next Steps:"
+echo "1. 🔄 Restart your terminal or run: source ~/.zshrc"
+echo "2. 🚀 Open Warp terminal for the enhanced experience"
+echo "3. 🐳 Start Docker Desktop if you installed it"
+echo "4. 🔑 Authenticate with GitHub: gh auth login (if needed)"
 echo ""
-echo "Verify installations with:"
-echo "  • node --version"
-echo "  • go version" 
-echo "  • php --version"
-echo "  • docker --version"
+echo "✅ Verify installations:"
+echo "  • asdf list        # See installed language versions"
+echo "  • node --version   # Node.js"
+echo "  • yarn --version   # Yarn (if installed)"
+echo "  • pnpm --version   # pnpm (if installed)"
+echo "  • bun --version    # Bun (if installed)"
+echo "  • go version       # Go"
+echo "  • php --version    # PHP"
+echo "  • python --version # Python"
+echo "  • docker --version # Docker"
 echo ""
-log_info "Happy coding! 🎯"
+echo "🎯 Pro Tips:"
+echo "  • Your terminal uses the Passion theme with real-time clock & command timing"
+echo "  • Switch to Powerlevel10k by uncommenting ZSH_THEME line in ~/.zshrc"
+echo "  • Use 'p10k configure' if you switch to Powerlevel10k"
+echo "  • Edit ~/.zshrc.local for personal customizations"
+echo "  • Run 'asdf list-all <plugin>' to see available versions"
+echo ""
+log_info "Happy coding! 🚀🎉"

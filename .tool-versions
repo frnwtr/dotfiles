@@ -1,2 +1,7 @@
-nodejs 24.8.0
+php 8.4.12
+nodejs lts
+yarn 1.22.22
+pnpm 10.16.1
+bun 1.2.22
 golang 1.25.1
+python 3.13.7t

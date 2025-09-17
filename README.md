@@ -187,9 +187,14 @@ dotfiles/
 │   ├── homebrew.sh         # Homebrew and packages setup
 │   ├── asdf.sh            # asdf and programming languages
 │   ├── shell.sh           # Shell configuration
-│   └── prevent-packages.sh # Package prevention script
-├── config/                # Configuration files (future)
-├── shell/                 # Additional shell scripts (future)  
+│   ├── prevent-packages.sh # Package prevention script
+└   └── php-cleanup.sh     # Fix PHP configuration conflicts
+├── config/
+│   ├── .gitconfig         # Git configuration template
+│   ├── .gitignore_global  # Global Git ignore patterns
+│   ├── asdf-php.env       # PHP environment setup for asdf
+│   └── PHP_SETUP.md       # Detailed PHP configuration guide
+├── shell/                 # Additional shell scripts (future)
 └── README.md              # This file
 ```
 
@@ -252,6 +257,18 @@ curl -sS https://get.symfony.com/cli/installer | bash
 # For local development, use:
 php -S localhost:8000  # Built-in PHP server
 # Or use Docker for more complex setups
+```
+
+**📖 For detailed PHP configuration and troubleshooting, see [config/PHP_SETUP.md](config/PHP_SETUP.md)**
+
+**Quick PHP Environment Setup:**
+```bash
+# Ensure asdf PHP takes precedence over Homebrew PHP
+source ~/dotfiles/config/asdf-php.env
+
+# Verify PHP version and HTTPS support
+php --version
+php -m | grep openssl
 ```
 
 ### Programming Language Versions

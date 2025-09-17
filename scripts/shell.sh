@@ -54,17 +54,17 @@ fi
 
 if command_exists node; then
     PLUGINS="$PLUGINS node npm"
-    
-    # Add package manager plugins
-    if command_exists yarn; then
-        PLUGINS="$PLUGINS yarn"
-    fi
-    
-    # Note: pnpm plugin doesn't exist in oh-my-zsh, using regular shell completion
-    
-    if command_exists bun; then
-        PLUGINS="$PLUGINS bun"
-    fi
+fi
+
+# Add package manager plugins only if they exist (independent of Node.js)
+if command_exists yarn; then
+    PLUGINS="$PLUGINS yarn"
+fi
+
+# Note: pnpm plugin doesn't exist in oh-my-zsh, using regular shell completion
+
+if command_exists bun; then
+    PLUGINS="$PLUGINS bun"
 fi
 
 if command_exists go; then
@@ -131,8 +131,14 @@ fi
 # Oh My Zsh installation path
 export ZSH="$HOME/.oh-my-zsh"
 
-# Set theme (will be overridden by powerlevel10k if installed)
-ZSH_THEME="robbyrussell"
+# Set theme - Passion theme with real-time prompt and command timing
+# Features:
+#   - Real-time clock display
+#   - Command execution time measurement  
+#   - Command error status indicators
+#   - Git status integration
+#   - Requires: gdate (from coreutils) and bc (calculator)
+ZSH_THEME="passion"
 
 # Plugins (dynamically configured based on installed tools)
 plugins=(git brew)
@@ -142,23 +148,54 @@ if [[ -f "$ZSH/oh-my-zsh.sh" ]]; then
     source "$ZSH/oh-my-zsh.sh"
 fi
 
-# Homebrew PATH (Apple Silicon)
+# Initialize Homebrew environment (without PATH modifications yet)
 if [[ -f "/opt/homebrew/bin/brew" ]]; then
-    eval "$(/opt/homebrew/bin/brew shellenv)"
+    # Set up Homebrew environment variables but delay PATH modification
+    HOMEBREW_PREFIX="/opt/homebrew"
+    HOMEBREW_CELLAR="$HOMEBREW_PREFIX/Cellar"
+    HOMEBREW_REPOSITORY="$HOMEBREW_PREFIX"
+    export HOMEBREW_PREFIX HOMEBREW_CELLAR HOMEBREW_REPOSITORY
+    export MANPATH="$HOMEBREW_PREFIX/share/man:${MANPATH+:$MANPATH}:"
+    export INFOPATH="$HOMEBREW_PREFIX/share/info:${INFOPATH:-}"
 fi
 
-# Homebrew PATH (Intel)
 if [[ -f "/usr/local/bin/brew" ]]; then
-    eval "$(/usr/local/bin/brew shellenv)"
+    # Set up Homebrew environment variables but delay PATH modification
+    HOMEBREW_PREFIX="/usr/local"
+    HOMEBREW_CELLAR="$HOMEBREW_PREFIX/Cellar"
+    HOMEBREW_REPOSITORY="$HOMEBREW_PREFIX/Homebrew"
+    export HOMEBREW_PREFIX HOMEBREW_CELLAR HOMEBREW_REPOSITORY
+    export MANPATH="$HOMEBREW_PREFIX/share/man:${MANPATH+:$MANPATH}:"
+    export INFOPATH="$HOMEBREW_PREFIX/share/info:${INFOPATH:-}"
 fi
 
-# asdf version manager
+# asdf version manager (initialize before adding Homebrew to PATH)
 if [[ -f "$HOME/.asdf/asdf.sh" ]]; then
     source "$HOME/.asdf/asdf.sh"
     # asdf completions
     if [[ -f "$HOME/.asdf/completions/asdf.bash" ]]; then
         source "$HOME/.asdf/completions/asdf.bash"
     fi
+    
+    # Auto-load PHP environment when PHP is managed by asdf
+    # This ensures proper configuration without manual sourcing
+    if command -v php >/dev/null 2>&1 && [[ "$(which php)" == *".asdf/shims/php" ]]; then
+        # Clear any conflicting PHP environment variables
+        unset PHP_INI_SCAN_DIR 2>/dev/null || true
+        
+        # Set PHP build environment for future builds
+        export PHP_WITHOUT_PEAR=yes
+        export PHP_CONFIGURE_OPTIONS="--with-openssl=/opt/homebrew/opt/openssl@3 --with-iconv=/opt/homebrew/opt/libiconv --with-kerberos=/opt/homebrew/opt/krb5"
+        export PKG_CONFIG_PATH="/opt/homebrew/lib/pkgconfig:/opt/homebrew/share/pkgconfig:$PKG_CONFIG_PATH"
+        export LDFLAGS="-L/opt/homebrew/lib -L/opt/homebrew/opt/openssl@3/lib -L/opt/homebrew/opt/icu4c/lib -L/opt/homebrew/opt/libedit/lib -L/opt/homebrew/opt/bison/lib -L/opt/homebrew/opt/libiconv/lib -L/opt/homebrew/opt/krb5/lib $LDFLAGS"
+        export CPPFLAGS="-I/opt/homebrew/include -I/opt/homebrew/opt/openssl@3/include -I/opt/homebrew/opt/icu4c/include -I/opt/homebrew/opt/libedit/include -I/opt/homebrew/opt/bison/include -I/opt/homebrew/opt/libiconv/include -I/opt/homebrew/opt/krb5/include $CPPFLAGS"
+    fi
+fi
+
+# Now add Homebrew to PATH after asdf is initialized
+# This ensures asdf shims take precedence over Homebrew binaries
+if [[ -n "$HOMEBREW_PREFIX" ]]; then
+    export PATH="$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/sbin:$PATH"
 fi
 
 # Go environment
@@ -178,15 +215,25 @@ if [[ -d "$HOME/.bun" ]]; then
     export PATH="$BUN_INSTALL/bin:$PATH"
 fi
 
-# Composer global packages
-if [[ -d "$HOME/.composer/vendor/bin" ]]; then
-    export PATH="$HOME/.composer/vendor/bin:$PATH"
-elif [[ -d "$HOME/.config/composer/vendor/bin" ]]; then
-    export PATH="$HOME/.config/composer/vendor/bin:$PATH"
+# PHP and Composer configuration
+if command -v php >/dev/null 2>&1; then
+    # Composer global packages
+    if [[ -d "$HOME/.composer/vendor/bin" ]]; then
+        export PATH="$HOME/.composer/vendor/bin:$PATH"
+    elif [[ -d "$HOME/.config/composer/vendor/bin" ]]; then
+        export PATH="$HOME/.config/composer/vendor/bin:$PATH"
+    fi
+    
+    # PHP memory limit for CLI operations
+    export PHP_CLI_SERVER_WORKERS=4
+    
+    # Note: PHP_INI_SCAN_DIR is handled by asdf-php.env for asdf installations
+    # to avoid conflicts between Homebrew and asdf PHP configurations
 fi
 
 # Python local binaries
 export PATH="$HOME/.local/bin:$PATH"
+
 
 # Custom aliases
 alias ll='ls -alF'
@@ -221,6 +268,29 @@ mkcd() {
     mkdir -p "$1" && cd "$1"
 }
 
+# Auto-load PHP environment when entering directories with PHP projects
+# This function runs when changing directories
+auto_load_php_env() {
+    # Only run if asdf PHP is available
+    if command -v php >/dev/null 2>&1 && [[ "$(which php)" == *".asdf/shims/php" ]]; then
+        # Check if we're in a PHP project (has composer.json, .php files, or .tool-versions with php)
+        if [[ -f "composer.json" ]] || [[ -f ".tool-versions" && -n "$(grep '^php ' .tool-versions 2>/dev/null)" ]] || [[ -n "$(find . -maxdepth 1 -name '*.php' 2>/dev/null | head -1)" ]]; then
+            # Ensure PHP environment is properly configured
+            if [[ -z "$PHP_CONFIGURE_OPTIONS" ]] || [[ "$PHP_INI_SCAN_DIR" == *"homebrew"* ]]; then
+                unset PHP_INI_SCAN_DIR 2>/dev/null || true
+                export PHP_WITHOUT_PEAR=yes
+                export PHP_CONFIGURE_OPTIONS="--with-openssl=/opt/homebrew/opt/openssl@3 --with-iconv=/opt/homebrew/opt/libiconv --with-kerberos=/opt/homebrew/opt/krb5"
+            fi
+        fi
+    fi
+}
+
+# Hook the function to directory changes (zsh)
+if [[ -n "$ZSH_VERSION" ]]; then
+    autoload -U add-zsh-hook
+    add-zsh-hook chpwd auto_load_php_env
+fi
+
 # Load local customizations if they exist
 if [[ -f "$HOME/.zshrc.local" ]]; then
     source "$HOME/.zshrc.local"
@@ -246,8 +316,13 @@ compinit
 # Case insensitive completion
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
 
-# Load powerlevel10k theme if available
-if [[ -f "$HOME/.oh-my-zsh/custom/themes/powerlevel10k/powerlevel10k.zsh-theme" ]]; then
+# Theme selection priority:
+# 1. Passion theme (default) - real-time prompt with command timing
+# 2. Powerlevel10k theme (if user prefers it) - uncomment line below
+# ZSH_THEME="powerlevel10k/powerlevel10k"
+
+# Fallback to Powerlevel10k if Passion theme is not available
+if [[ ! -f "$HOME/.oh-my-zsh/themes/passion.zsh-theme" ]] && [[ -f "$HOME/.oh-my-zsh/custom/themes/powerlevel10k/powerlevel10k.zsh-theme" ]]; then
     ZSH_THEME="powerlevel10k/powerlevel10k"
 fi
 
@@ -287,6 +362,24 @@ else
     log_info "Powerlevel10k theme already installed"
 fi
 
+# Install Passion theme
+if [ ! -f "$HOME/.oh-my-zsh/themes/passion.zsh-theme" ]; then
+    log_info "Installing Passion theme..."
+    # Clone the passion theme repository to temp directory
+    TEMP_DIR=$(mktemp -d)
+    git clone https://github.com/ChesterYue/ohmyzsh-theme-passion.git "$TEMP_DIR/passion"
+    
+    # Copy theme file to oh-my-zsh themes directory
+    cp "$TEMP_DIR/passion/passion.zsh-theme" "$HOME/.oh-my-zsh/themes/passion.zsh-theme"
+    
+    # Clean up temp directory
+    rm -rf "$TEMP_DIR"
+    
+    log_info "Passion theme installed successfully"
+else
+    log_info "Passion theme already installed"
+fi
+
 # Source asdf to make newly installed tools available
 if [[ -f "/opt/homebrew/opt/asdf/libexec/asdf.sh" ]]; then
     source "/opt/homebrew/opt/asdf/libexec/asdf.sh"
@@ -294,110 +387,59 @@ elif [[ -f "$HOME/.asdf/asdf.sh" ]]; then
     source "$HOME/.asdf/asdf.sh"
 fi
 
-# Check if Node.js was installed and set up package managers
-if [[ -n "$INSTALL_NODE" ]] && [[ "$INSTALL_NODE" != "no" ]]; then
-    # Node.js was supposed to be installed, check if it's available
-    if command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
-        # Create npm global directory
-        log_info "Setting up npm global directory..."
-        mkdir -p "$HOME/.npm-global"
-        npm config set prefix "$HOME/.npm-global"
-        
-        # Ask about additional package managers
-        log_info "Node.js is installed. Setting up package managers..."
-        
-        if [[ "$QUIET_MODE" != "true" ]]; then
-            echo ""
-            echo "Available Node.js package managers:"
-            echo "  1) npm (default - already installed)"
-            echo "  2) yarn - Fast, reliable dependency management"
-            echo "  3) pnpm - Fast, disk space efficient package manager"
-            echo "  4) bun - All-in-one JavaScript runtime & toolkit"
-            echo ""
-            read -p "Which additional package managers would you like to install? (1-4, multiple: 2,3): " -r PACKAGE_MANAGERS
-            echo ""
-            
-            # Parse selections
-            if [[ $PACKAGE_MANAGERS == *"2"* ]] || [[ $PACKAGE_MANAGERS == *"yarn"* ]]; then
-                if ! command -v yarn >/dev/null 2>&1; then
-                    log_info "Installing Yarn..."
-                    npm install -g yarn
-                else
-                    log_info "Yarn is already installed"
-                fi
+# Set up npm global directory if Node.js is available
+if command -v npm >/dev/null 2>&1; then
+    log_info "Setting up npm global directory..."
+    mkdir -p "$HOME/.npm-global"
+    npm config set prefix "$HOME/.npm-global"
+    
+    # Check if we should suggest Turborepo (only if Node.js ecosystem was chosen)
+    if [[ -n "$INSTALL_NODE" ]] && [[ "$INSTALL_NODE" != "no" ]] && [[ "$QUIET_MODE" != "true" ]]; then
+        echo ""
+        read -p "Would you like to install Turborepo (monorepo build system)? (y/N): " -n 1 -r INSTALL_TURBO
+        echo ""
+        if [[ $INSTALL_TURBO =~ ^[Yy]$ ]]; then
+            if ! command -v turbo >/dev/null 2>&1; then
+                log_info "Installing Turborepo..."
+                npm install -g turbo
+            else
+                log_info "Turborepo is already installed"
             fi
-            
-            if [[ $PACKAGE_MANAGERS == *"3"* ]] || [[ $PACKAGE_MANAGERS == *"pnpm"* ]]; then
-                if ! command -v pnpm >/dev/null 2>&1; then
-                    log_info "Installing pnpm..."
-                    npm install -g pnpm
-                else
-                    log_info "pnpm is already installed"
-                fi
-            fi
-            
-            if [[ $PACKAGE_MANAGERS == *"4"* ]] || [[ $PACKAGE_MANAGERS == *"bun"* ]]; then
-                if ! command -v bun >/dev/null 2>&1; then
-                    log_info "Installing Bun..."
-                    curl -fsSL https://bun.sh/install | bash
-                    # Add bun to PATH for current session
-                    export PATH="$HOME/.bun/bin:$PATH"
-                else
-                    log_info "Bun is already installed"
-                fi
-            fi
-            
-            # Ask about Turborepo
-            echo ""
-            read -p "Would you like to install Turborepo (monorepo build system)? (y/N): " -n 1 -r INSTALL_TURBO
-            echo ""
-            if [[ $INSTALL_TURBO =~ ^[Yy]$ ]]; then
-                if ! command -v turbo >/dev/null 2>&1; then
-                    log_info "Installing Turborepo..."
-                    npm install -g turbo
-                else
-                    log_info "Turborepo is already installed"
-                fi
-            fi
-        else
-            log_info "Skipping package manager selection (quiet mode)"
-            log_info "You can install additional package managers manually:"
-            log_info "  - Yarn: npm install -g yarn"
-            log_info "  - pnpm: npm install -g pnpm"
-            log_info "  - Bun: curl -fsSL https://bun.sh/install | bash"
-            log_info "  - Turborepo: npm install -g turbo"
         fi
-    else
-        log_warning "Node.js was supposed to be installed but is not available in PATH"
-        log_info "You may need to restart your terminal or run: source ~/.zshrc"
-        log_info "You can install package managers manually later:"
-        log_info "  - Yarn: npm install -g yarn"
-        log_info "  - pnpm: npm install -g pnpm"
-        log_info "  - Bun: curl -fsSL https://bun.sh/install | bash"
-        log_info "  - Turborepo: npm install -g turbo"
     fi
-elif command -v npm >/dev/null 2>&1; then
-    # Node.js is already available (probably pre-installed)
-    log_info "Found existing Node.js installation"
-    log_info "You can install package managers manually if needed:"
-    log_info "  - Yarn: npm install -g yarn"
-    log_info "  - pnpm: npm install -g pnpm"
-    log_info "  - Bun: curl -fsSL https://bun.sh/install | bash"
-    log_info "  - Turborepo: npm install -g turbo"
+    
+    log_info "Node.js package manager setup:"
+    if command -v yarn >/dev/null 2>&1; then
+        log_info "  ✓ Yarn is available"
+    fi
+    if command -v pnpm >/dev/null 2>&1; then
+        log_info "  ✓ pnpm is available"
+    fi
+    if command -v bun >/dev/null 2>&1; then
+        log_info "  ✓ Bun is available"
+    fi
+    
+    log_info "Note: Package managers (Yarn, pnpm, Bun) are managed by asdf during installation"
+elif [[ -n "$INSTALL_NODE" ]] && [[ "$INSTALL_NODE" != "no" ]]; then
+    log_warning "Node.js was supposed to be installed but is not available in PATH"
+    log_info "You may need to restart your terminal or run: source ~/.zshrc"
 fi
 
-# PHP Composer and server tools setup
+# PHP and Composer tools setup
 if command -v php >/dev/null 2>&1; then
-    log_info "PHP is installed. Setting up PHP tools..."
+    log_info "PHP is installed. Setting up PHP development tools..."
     
-    # Install Composer if not already installed
-    if ! command -v composer >/dev/null 2>&1; then
-        log_info "Installing Composer (PHP dependency manager)..."
+    # Check if Composer is available (should be installed via asdf if PHP was chosen)
+    if command -v composer >/dev/null 2>&1; then
+        log_info "Composer is available"
+    elif [[ -n "$INSTALL_PHP" ]] && [[ "$INSTALL_PHP" != "no" ]]; then
+        log_warning "Composer was supposed to be installed via asdf but is not available"
+        log_info "Installing Composer as fallback..."
         curl -sS https://getcomposer.org/installer | php
         mv composer.phar /usr/local/bin/composer 2>/dev/null || sudo mv composer.phar /usr/local/bin/composer
         chmod +x /usr/local/bin/composer 2>/dev/null || sudo chmod +x /usr/local/bin/composer
     else
-        log_info "Composer is already installed"
+        log_info "Note: Composer is managed by asdf during PHP installation"
     fi
     
     if [[ "$QUIET_MODE" != "true" ]]; then
@@ -568,7 +610,8 @@ log_success "Shell configuration complete!"
 echo ""
 log_info "Shell setup summary:"
 echo "  • Oh My Zsh installed with useful plugins"
-echo "  • Powerlevel10k theme for better prompt"
+echo "  • Passion theme with real-time prompt & command timing"
+echo "  • Powerlevel10k theme available as alternative"
 echo "  • Aliases for git, docker, and common commands"
 echo "  • Proper PATH setup for all tools"
 echo "  • History and completion improvements"
